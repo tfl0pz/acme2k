@@ -78,19 +78,14 @@ threadmain(int argc, char *argv[])
 			globalautoindent = TRUE;
 		break;
 
-/*  bartmode/flag is now an option to be turned on config.h, just
- *  because it is way too useful to leave it as an meaningless
- *  flag, especially since considering how almost everyone seems
- *  to even miss its existence.
- *
- *  to get to the point, it denies window focus following mouse.
- *  how fickle those mice can truly be when decieveth by a soothing
- *  treat, a teat or two.
+/*  bart mode is back as a command line option, with the meaning
+ *  reversed from the original acme2k runtime flag: the default is
+ *  click-to-focus (bartflag TRUE, set in config.h), and -b restores
+ *  focus-follows-mouse for those who want the classic fickle mice.
  */
-
-/*	case 'b':
-		bartflag = TRUE;
-		break; */
+	case 'b':
+		bartflag = FALSE;
+		break;
 
 	case 'c':
 		p = ARGF();
@@ -130,7 +125,7 @@ threadmain(int argc, char *argv[])
 		break;
 	default:
 	Usage:
-		fprint(2, "usage: acme -a -c ncol -f fontname -F fixedwidthfontname -l loadfile -W winsize\n");
+		fprint(2, "usage: acme -a -b -c ncol -f fontname -F fixedwidthfontname -l loadfile -W winsize\n");
 		threadexitsall("usage");
 	}ARGEND
 
