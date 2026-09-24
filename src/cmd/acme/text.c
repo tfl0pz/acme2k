@@ -694,8 +694,23 @@ texttype(Text *t, Rune r)
 	case Kdown:
 		if(t->what == Tag)
 			goto Tagdown;
-		n = t->fr.maxlines/3;
-		goto case_Down;
+		typecommit(t);
+		/* down one line, keeping the column */
+		nnb = 0;
+		if(t->q0>0 && textreadc(t, t->q0-1)!='\n')
+			nnb = textbswidth(t, 0x15);
+		q0 = t->q0;
+		while(q0<t->file->b.nc && textreadc(t, q0)!='\n')
+			q0++;
+		if(q0 == t->file->b.nc)
+			return;	/* already on the last line */
+		q0++;
+		while(nnb>0 && q0<t->file->b.nc && textreadc(t, q0)!='\n'){
+			q0++;
+			nnb--;
+		}
+		textshow(t, q0, q0, TRUE);
+		return;
 	case Kscrollonedown:
 		if(t->what == Tag)
 			goto Tagdown;
@@ -712,8 +727,23 @@ texttype(Text *t, Rune r)
 	case Kup:
 		if(t->what == Tag)
 			goto Tagup;
-		n = t->fr.maxlines/3;
-		goto case_Up;
+		typecommit(t);
+		/* up one line, keeping the column */
+		nnb = 0;
+		if(t->q0>0 && textreadc(t, t->q0-1)!='\n')
+			nnb = textbswidth(t, 0x15);
+		q0 = t->q0-nnb;	/* start of current line */
+		if(q0 == 0)
+			return;	/* already on the first line */
+		q0--;		/* the newline ending the previous line */
+		while(q0>0 && textreadc(t, q0-1)!='\n')
+			q0--;	/* start of previous line */
+		while(nnb>0 && q0<t->file->b.nc && textreadc(t, q0)!='\n'){
+			q0++;
+			nnb--;
+		}
+		textshow(t, q0, q0, TRUE);
+		return;
 	case Kscrolloneup:
 		if(t->what == Tag)
 			goto Tagup;
