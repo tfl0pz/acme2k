@@ -25,11 +25,12 @@ OFILES=\
 	util.$O\
 	wind.$O\
 	xfid.$O\
+	dat.$O\
 
 HFILES=dat.h\
 	edit.h\
 	fns.h\
-	config.h
+	config.h\
 
 <$PLAN9/src/mkone
 <$PLAN9/src/mkdirs

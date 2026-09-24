@@ -44,38 +44,68 @@ int	swapscrollbuttons	= FALSE;
 int bartflag			= TRUE;
 
 /*
- *  colors-constants. now let me take a minute to explain
- *  them. C_TAGBG/FG/HLBG/HLFG are respectively your tag
- *  windows background, foreground, highlighted back- and
- *  foreground color. The same exact applies to C_TXT*-
- *  variants of the same constant just in this case it handles
- *  the colorscheme of the text window.
+ *  two compile-time palettes, switched at runtime by executing
+ *  the built-in Dark / Light commands from any tag (same as
+ *  Put or Font).  darkmode picks the scheme acme starts
+ *  with.  colors are 0xRRGGBBFF, no hashtag.
  *
- *  C_WINBUTTON is the button which you adjust your columns
- *  position with. C_COLBUTTON represents a separate text
- *  windows button. C_TMPBUTTON is the so-called "dirty"
- *  or "unclean" -marker aka notifying the file as modified put
- *  in the middle of C_COLBUTTON. C_SCROLLBG is plain and simple
- *  your scrollbars background color.
- *
- *  the last two defines are for defining the color of the specific
- *  buttons highlight background.
+ *  slots, in order: tag back/fore/hlback/hlfore, text
+ *  back/fore/hlback/hlfore, column button, window button
+ *  (tag border), dirty marker, scrollbar, button-2 highlight,
+ *  button-3 highlight, desktop, borders.
  */
 
-#define C_TAGBG			0xFFFFFFFF
-#define C_TAGFG			0x000000FF
-#define C_TAGHLBG		0x999999FF
-#define C_TAGHLFG		0x000000FF
+int darkmode = FALSE;
 
-#define C_TXTBG			0xFFFFFFFF
-#define C_TXTFG			0x000000FF
-#define C_TXTHLBG		0x999999FF
-#define C_TXTHLFG		0x000000FF
+enum {
+	P_TAGBG = 0, P_TAGFG, P_TAGHLBG, P_TAGHLFG,
+	P_TXTBG, P_TXTFG, P_TXTHLBG, P_TXTHLFG,
+	P_WINBUTTON, P_COLBUTTON, P_TMPBUTTON, P_SCROLLBG,
+	P_BUTTON2HL, P_BUTTON3HL, P_DESKTOPBG, P_BORDER,
+	P_NCOLORS
+};
 
-#define C_WINBUTTON		0x4d4d4dFF
-#define C_COLBUTTON		0x55aaaaFF
-#define C_TMPBUTTON		0x55aaaaFF
-#define C_SCROLLBG		0x999999FF
+/*  classic-dark: a dark take on the classic acme hues.
+ *  cool slate tags vs. warm body, gold column button, teal
+ *  window button, red dirty marker, olive scrollbar, and a
+ *  near-black desktop so empty space never blinds.  */
+static uint darkpal[P_NCOLORS] = {
+	0x252B33FF,	/* P_TAGBG */
+	0xB9C4CFFF,	/* P_TAGFG */
+	0x3E4A57FF,	/* P_TAGHLBG */
+	0xE6ECF2FF,	/* P_TAGHLFG */
+	0x282620FF,	/* P_TXTBG */
+	0xD8D3C6FF,	/* P_TXTFG */
+	0x6E5F22FF,	/* P_TXTHLBG */
+	0xF5F1E4FF,	/* P_TXTHLFG */
+	0xC9973BFF,	/* P_WINBUTTON */
+	0x3E8F8FFF,	/* P_COLBUTTON */
+	0xB84A4AFF,	/* P_TMPBUTTON */
+	0x5A6B3AFF,	/* P_SCROLLBG */
+	0xAA3A3AFF,	/* P_BUTTON2HL */
+	0x3E7A4EFF,	/* P_BUTTON3HL */
+	0x14161AFF,	/* P_DESKTOPBG */
+	0x3A4048FF,	/* P_BORDER */
+};
 
-#define C_BUTTON2HL		0x55aaaaFF
-#define C_BUTTON3HL		0x55aaaaFF
+/*  the default classic acme colors: pale blue-green tags,
+ *  cream body, purple-blue buttons, blue dirty marker,
+ *  yellow-green scrollbar, red/green button flashes.  */
+static uint lightpal[P_NCOLORS] = {
+	0xEAFFFFFF,	/* P_TAGBG */
+	0x000000FF,	/* P_TAGFG */
+	0x9EEEEEFF,	/* P_TAGHLBG */
+	0x000000FF,	/* P_TAGHLFG */
+	0xFFFFEAFF,	/* P_TXTBG */
+	0x000000FF,	/* P_TXTFG */
+	0xEEEE9EFF,	/* P_TXTHLBG */
+	0x000000FF,	/* P_TXTHLFG */
+	0x8888CCFF,	/* P_WINBUTTON */
+	0x8888CCFF,	/* P_COLBUTTON */
+	0x000099FF,	/* P_TMPBUTTON */
+	0x99994CFF,	/* P_SCROLLBG */
+	0xAA0000FF,	/* P_BUTTON2HL */
+	0x006600FF,	/* P_BUTTON3HL */
+	0xFFFFFFFF,	/* P_DESKTOPBG */
+	0x000000FF,	/* P_BORDER */
+};

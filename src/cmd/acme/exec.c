@@ -55,6 +55,8 @@ void	sendx(Text*, Text*, Text*, int, int, Rune*, int);
 void	sort(Text*, Text*, Text*, int, int, Rune*, int);
 void	tab(Text*, Text*, Text*, int, int, Rune*, int);
 void	zeroxx(Text*, Text*, Text*, int, int, Rune*, int);
+void	darkcmd(Text*, Text*, Text*, int, int, Rune*, int);
+void	lightcmd(Text*, Text*, Text*, int, int, Rune*, int);
 
 typedef struct Exectab Exectab;
 struct Exectab
@@ -96,6 +98,9 @@ static Rune LTab[] = { 'T', 'a', 'b', 0 };
 static Rune LUndo[] = { 'U', 'n', 'd', 'o', 0 };
 static Rune LZerox[] = { 'Z', 'e', 'r', 'o', 'x', 0 };
 
+static Rune LDark[] = { 'D', 'a', 'r', 'k', 0 };
+static Rune LLight[] = { 'L', 'i', 'g', 'h', 't', 0 };
+
 Exectab exectab[] = {
 	{ LAbort,		doabort,	FALSE,	XXX,		XXX,		},
 	{ LCut,		cut,		TRUE,	TRUE,	TRUE	},
@@ -126,8 +131,44 @@ Exectab exectab[] = {
 	{ LTab,		tab,		FALSE,	XXX,		XXX		},
 	{ LUndo,		undo,	FALSE,	TRUE,	XXX		},
 	{ LZerox,		zeroxx,	FALSE,	XXX,		XXX		},
+	{ LDark,		darkcmd,	FALSE,	XXX,		XXX		},
+	{ LLight,		lightcmd,	FALSE,	XXX,		XXX		},
 	{ nil, 			0,		0,		0,		0		}
 };
+
+void
+darkcmd(Text *et, Text *t, Text *argt, int flag, int flag1, Rune *arg, int narg)
+{
+	USED(et);
+	USED(t);
+	USED(argt);
+	USED(flag);
+	USED(flag1);
+	USED(arg);
+	USED(narg);
+
+	if(darkmode == FALSE){
+		darkmode = TRUE;
+		recolor();
+	}
+}
+
+void
+lightcmd(Text *et, Text *t, Text *argt, int flag, int flag1, Rune *arg, int narg)
+{
+	USED(et);
+	USED(t);
+	USED(argt);
+	USED(flag);
+	USED(flag1);
+	USED(arg);
+	USED(narg);
+
+	if(darkmode == TRUE){
+		darkmode = FALSE;
+		recolor();
+	}
+}
 
 Exectab*
 lookup(Rune *r, int n)
@@ -192,8 +233,9 @@ execute(Text *t, uint aq0, uint aq1, int external, Text *argt)
 			f |= 2;
 		}
 		aa = getbytearg(argt, TRUE, TRUE, &a);
-		if(a){	
+		if(a){
 			if(strlen(a) > EVENTSIZE){	/* too big; too bad */
+				free(r);
 				free(aa);
 				free(a);
 				warning(nil, "argument string too long\n");
@@ -208,14 +250,14 @@ execute(Text *t, uint aq0, uint aq1, int external, Text *argt)
 		if(n <= EVENTSIZE)
 			winevent(t->w, "%c%d %d %d %d %.*S\n", c, aq0, aq1, f, n, n, r);
 		else
-			winevent(t->w, "%c%d %d %d 0 \n", c, aq0, aq1, f, n);
+			winevent(t->w, "%c%d %d %d 0 \n", c, aq0, aq1, f);
 		if(q0!=aq0 || q1!=aq1){
 			n = q1-q0;
 			bufread(&t->file->b, q0, r, n);
 			if(n <= EVENTSIZE)
 				winevent(t->w, "%c%d %d 0 %d %.*S\n", c, q0, q1, n, n, r);
 			else
-				winevent(t->w, "%c%d %d 0 0 \n", c, q0, q1, n);
+				winevent(t->w, "%c%d %d 0 0 \n", c, q0, q1);
 		}
 		if(a){
 			winevent(t->w, "%c0 0 0 %d %s\n", c, utflen(a), a);
@@ -279,13 +321,14 @@ getarg(Text *argt, int doaddr, int dofile, Rune **rp, int *nrp)
 	Expand e;
 	char *a;
 
+	memset(&e, 0, sizeof e);
 	*rp = nil;
 	*nrp = 0;
 	if(argt == nil)
 		return nil;
 	a = nil;
 	textcommit(argt, TRUE);
-	if(expand(argt, argt->q0, argt->q1, &e)){
+	if(expand(argt, argt->q0, argt->q1, &e, FALSE)){
 		free(e.bname);
 		if(e.nname && dofile){
 			e.name = runerealloc(e.name, e.nname+1);
@@ -673,7 +716,7 @@ checksha1(char *name, File *f, Dir *d)
 	DigestState *h;
 	uchar out[20];
 	uchar *buf;
-	
+
 	fd = open(name, OREAD);
 	if(fd < 0)
 		return;
@@ -689,7 +732,7 @@ checksha1(char *name, File *f, Dir *d)
 		f->qidpath = d->qid.path;
 		f->mtime = d->mtime;
 	}
-}	
+}
 
 void
 putfile(File *f, int q0, int q1, Rune *namer, int nname)
@@ -698,7 +741,7 @@ putfile(File *f, int q0, int q1, Rune *namer, int nname)
 	Rune *r;
 	Biobuf *b;
 	char *s, *name;
-	int i, fd, q;
+	int i, fd, q, ret, retc;
 	Dir *d, *d1;
 	Window *w;
 	int isapp;
@@ -721,6 +764,7 @@ putfile(File *f, int q0, int q1, Rune *namer, int nname)
 			goto Rescue1;
 		}
 	}
+
 	fd = create(name, OWRITE, 0666);
 	if(fd < 0){
 		warning(nil, "can't create file %s: %r\n", name);
@@ -760,9 +804,14 @@ putfile(File *f, int q0, int q1, Rune *namer, int nname)
 		warning(nil, "can't write file %s: %r\n", name);
 		goto Rescue2;
 	}
-	Bterm(b);
+	ret = Bterm(b);
+	retc = close(fd);
 	free(b);
 	b = nil;
+	if(ret < 0 || retc < 0) {
+		warning(nil, "can't write file %s: %r\n", name);
+		goto Rescue2; // flush or close failed
+	}
 	if(runeeq(namer, nname, f->name, f->nname)){
 		if(q0!=0 || q1!=f->b.nc){
 			f->mod = TRUE;
@@ -779,10 +828,9 @@ putfile(File *f, int q0, int q1, Rune *namer, int nname)
 			// in case we don't have read permission.
 			// (The create above worked, so we probably
 			// still have write permission.)
-			close(fd);
 			fd = open(name, OWRITE);
-
 			d1 = dirfstat(fd);
+			close(fd);
 			if(d1 != nil){
 				free(d);
 				d = d1;
@@ -815,17 +863,76 @@ putfile(File *f, int q0, int q1, Rune *namer, int nname)
 	if(b != nil) {
 		Bterm(b);
 		free(b);
+		close(fd);
 	}
 	free(h);
 	fbuffree(s);
 	fbuffree(r);
-	close(fd);
 	/* fall through */
 
     Rescue1:
 	free(d);
 	free(namer);
 	free(name);
+}
+
+static void
+trimspaces(Text *et)
+{
+	File *f;
+	Rune *r;
+	Text *t;
+	uint q0, n, delstart;
+	int c, i, marked;
+
+	t = &et->w->body;
+	f = t->file;
+	marked = 0;
+
+	if(t->w!=nil && et->w!=t->w){
+		/* can this happen when t == &et->w->body? */
+		c = 'M';
+		if(et->w)
+			c = et->w->owner;
+		winlock(t->w, c);
+	}
+
+	r = fbufalloc();
+	q0 = f->b.nc;
+	delstart = q0; /* end of current space run, or 0 if no active run; = q0 to delete spaces before EOF */
+	while(q0 > 0) {
+		n = RBUFSIZE;
+		if(n > q0)
+			n = q0;
+		q0 -= n;
+		bufread(&f->b, q0, r, n);
+		for(i=n; ; i--) {
+			if(i == 0 || (r[i-1] != ' ' && r[i-1] != '\t')) {
+				// Found non-space or start of buffer. Delete active space run.
+				if(q0+i < delstart) {
+					if(!marked) {
+						marked = 1;
+						seq++;
+						filemark(f);
+					}
+					textdelete(t, q0+i, delstart, TRUE);
+				}
+				if(i == 0) {
+					/* keep run active into tail of next buffer */
+					if(delstart > 0)
+						delstart = q0;
+					break;
+				}
+				delstart = 0;
+				if(r[i-1] == '\n')
+					delstart = q0+i-1; /* delete spaces before this newline */
+			}
+		}
+	}
+	fbuffree(r);
+
+	if(t->w!=nil && et->w!=t->w)
+		winunlock(t->w);
 }
 
 void
@@ -850,6 +957,8 @@ put(Text *et, Text *_0, Text *argt, int _1, int _2, Rune *arg, int narg)
 		warning(nil, "no file name\n");
 		return;
 	}
+	if(w->autoindent)
+		trimspaces(et);
 	namer = bytetorune(name, &nname);
 	putfile(f, 0, f->b.nc, namer, nname);
 	xfidlog(w, "put");
@@ -1016,7 +1125,7 @@ look(Text *et, Text *t, Text *argt, int _0, int _1, Rune *arg, int narg)
 	if(et && et->w){
 		t = &et->w->body;
 		if(narg > 0){
-			search(t, arg, narg);
+			search(t, arg, narg, FALSE);
 			return;
 		}
 		getarg(argt, FALSE, FALSE, &r, &n);
@@ -1025,7 +1134,7 @@ look(Text *et, Text *t, Text *argt, int _0, int _1, Rune *arg, int narg)
 			r = runemalloc(n);
 			bufread(&t->file->b, t->q0, r, n);
 		}
-		search(t, r, n);
+		search(t, r, n, FALSE);
 		free(r);
 	}
 }
@@ -1465,6 +1574,11 @@ runproc(void *argvp)
 	iseditcmd = (uintptr)argv[9];
 	free(argv);
 
+	unsetenv("acmeaddr");
+	unsetenv("winid");
+	unsetenv("%");
+	unsetenv("samfile");
+
 	t = s;
 	while(*t==' ' || *t=='\n' || *t=='\t')
 		t++;
@@ -1661,6 +1775,10 @@ Hard:
 	rcarg[2] = t;
 	rcarg[3] = nil;
 	ret = threadspawnd(sfd, rcarg[0], rcarg, dir);
+	unsetenv("acmeaddr");
+	unsetenv("winid");
+	unsetenv("%");
+	unsetenv("samfile");
 	free(dir);
 	if(ret >= 0){
 		if(cpid)
