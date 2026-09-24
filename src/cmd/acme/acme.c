@@ -88,9 +88,9 @@ threadmain(int argc, char *argv[])
  *  treat, a teat or two.
  */
 
-/*	case 'b':
-		bartflag = TRUE;
-		break; */
+	case 'b':
+		bartflag = FALSE;
+		break; 
 
 	case 'c':
 		p = ARGF();
