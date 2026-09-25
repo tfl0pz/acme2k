@@ -150,7 +150,7 @@ coladd(Column *c, Window *w, Window *clone, int y)
 	savemouse(w);
 	/* near the button, but in the body */
 	moveto(mousectl, addpt(w->tag.scrollr.max, Pt(3, 3)));
-	barttext = &w->body;
+	textfocus(&w->body);
 	return w;
 }
 

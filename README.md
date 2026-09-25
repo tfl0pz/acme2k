@@ -10,7 +10,7 @@ A fork of [acme2k](https://github.com/karahobny/acme2k) (itself a fork of plan9p
 - **Classic light mode.** The light scheme is the authentic original acme colors — the yellowish text background, teal highlights, and white desktop you know from classic acme.
 - **A new, optimized dark mode.** The original acme2k dark scheme painted almost everything one color, with blinding white empty desktop showing through wherever there was no column. This fork defines 16 distinct palette slots (tag background/foreground, highlighted text, window/column/scroll buttons, desktop, borders, ...) so the dark elements are actually distinguishable from each other, and the desktop is dark too.
 - **Compile-time default theme.** Set `darkmode` in `src/cmd/acme/config.h` to choose which scheme acme starts with.
-- **Bart mode is a command line option again, with reversed meaning.** Default is click-to-focus: typing goes to the window you last clicked, not wherever the mouse happens to be. Pass `-b` to get the classic focus-follows-mouse behavior back.
+- **Bart mode is a command line option again, with reversed meaning.** Default is click-to-focus: typing goes to the window you last clicked, not wherever the mouse happens to be, and the caret is shown only in that focused window (classic acme shows a caret in every window at its last insertion point). Pass `-b` to get the classic focus-follows-mouse behavior back, carets in all windows included.
 
 ## Install
 

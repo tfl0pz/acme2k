@@ -601,7 +601,7 @@ mousethread(void *v)
 				but = 2;
 			else if(m.buttons == 4)
 				but = 3;
-			barttext = t;
+			textfocus(t);
 			if(t->what==Body && ptinrect(m.xy, t->scrollr)){
 				if(but){
 					if(swapscrollbuttons){
@@ -636,7 +636,7 @@ mousethread(void *v)
 					else if(t->what == Tag){
 						coldragwin(t->col, t->w, but);
 						if(t->w)
-							barttext = &t->w->body;
+							textfocus(&t->w->body);
 					}
 					if(t->col)
 						activecol = t->col;
@@ -1077,6 +1077,10 @@ textrecolor(Text *t)
 		memmove(t->fr.cols, tagcols, sizeof t->fr.cols);
 	else
 		memmove(t->fr.cols, textcols, sizeof t->fr.cols);
+	/* the tick image is painted once from f->cols; rebuild it so
+	 * the caret picks up the new palette instead of keeping the
+	 * previous theme's colors */
+	frinittick(&t->fr);
 }
 
 void

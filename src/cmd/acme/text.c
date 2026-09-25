@@ -1242,6 +1242,9 @@ textsetselect(Text *t, uint q0, uint q1)
 		ticked = 0;
 		p1 = t->fr.nchars;
 	}
+	/* show the caret only in the focused text (click-to-focus mode) */
+	if(bartflag && t != barttext)
+		ticked = 0;
 	if(p0==t->fr.p0 && p1==t->fr.p1){
 		if(p0 == p1 && ticked != t->fr.ticked)
 			frtick(&t->fr, frptofchar(&t->fr, p0), ticked);
@@ -1276,6 +1279,27 @@ textsetselect(Text *t, uint q0, uint q1)
     Return:
 	t->fr.p0 = p0;
 	t->fr.p1 = p1;
+}
+
+/*
+ * keyboard focus moved to t (click-to-focus mode): hide the caret in
+ * the previously focused text and show it in the new one.  textsetselect
+ * suppresses the caret in unfocused texts, so re-evaluating the selection
+ * is all it takes.  classic -b focus-follows-mouse mode is untouched.
+ */
+void
+textfocus(Text *t)
+{
+	Text *old;
+
+	if(!bartflag || barttext == t)
+		return;
+	old = barttext;
+	barttext = t;
+	if(old)
+		textsetselect(old, old->q0, old->q1);
+	if(t)
+		textsetselect(t, t->q0, t->q1);
 }
 
 /*

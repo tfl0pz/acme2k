@@ -226,6 +226,7 @@ int		textselect23(Text*, uint*, uint*, Image*, int);
 int		textselect3(Text*, uint*, uint*);
 void		textsetorigin(Text*, uint, int);
 void		textsetselect(Text*, uint, uint);
+void		textfocus(Text*);
 void		textshow(Text*, uint, uint, int);
 void		texttype(Text*, Rune);
 
